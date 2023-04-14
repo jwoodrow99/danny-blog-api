@@ -1,6 +1,6 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
-import User from 'App/Models/Users'
+import User from 'App/Models/User'
 
 import jwt from 'jsonwebtoken'
 import { appKey } from 'Config/app'

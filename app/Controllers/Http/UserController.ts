@@ -1,6 +1,6 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
-import User from 'App/Models/Users'
+import User from 'App/Models/User'
 
 export default class UserController {
   public async index(ctx: HttpContextContract) {
