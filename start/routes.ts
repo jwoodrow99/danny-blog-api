@@ -37,3 +37,14 @@ Route.group(() => {
 })
   .prefix('/user')
   .middleware('jwt')
+
+// Blog routes
+Route.group(() => {
+  Route.get('/', 'BlogController.index')
+  Route.get('/:id', 'BlogController.show')
+  Route.post('/', 'BlogController.store')
+  Route.patch('/:id', 'BlogController.update')
+  Route.delete('/:id', 'BlogController.destroy')
+})
+  .prefix('/blog')
+  .middleware('jwt')
