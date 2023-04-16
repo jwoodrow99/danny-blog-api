@@ -39,7 +39,10 @@ export default class ValidateToken {
     }
 
     // Find associated user and attach to request
-    const matchingUser = await User.find(decoded.data.user.id)
+    const matchingUser = await User.query()
+      .select('id', 'email', 'created_at', 'updated_at')
+      .where('id', decoded.data.user.id)
+      .first()
 
     if (!matchingUser) {
       response.status(404)

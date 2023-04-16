@@ -8,7 +8,7 @@ export default class BlogController {
   public async index(ctx: HttpContextContract) {
     const { request, response } = ctx
 
-    const blogs = Database.from('blogs').select('*')
+    const blogs = Blog.query().preload('user')
 
     // Search
     if (request.qs().search) {
@@ -39,12 +39,12 @@ export default class BlogController {
     const { request, response } = ctx
 
     try {
-      const blog = await Blog.findOrFail(request.params().id)
+      const blog = Blog.query().preload('user').where('id', request.params().id).first()
 
       response.status(200)
       response.send({
         message: 'Blog',
-        blog: blog,
+        blog: await blog,
       })
       return
     } catch (error) {
@@ -127,6 +127,15 @@ export default class BlogController {
 
     try {
       const blog = await Blog.findOrFail(request.params().id)
+
+      if (blog.userId !== request.all().user.id) {
+        response.status(401)
+        response.send({
+          message: 'You cannot delete this resource.',
+        })
+        return
+      }
+
       await blog.delete()
       response.status(200)
       response.send({

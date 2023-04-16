@@ -4,14 +4,38 @@ import User from 'App/Models/User'
 
 export default class UserController {
   public async index(ctx: HttpContextContract) {
-    // const { request } = ctx
+    const { request } = ctx
 
-    const allUsers = await User.all()
+    const allUsers = User.query().select('id', 'email', 'created_at', 'updated_at')
 
     return {
       message: 'Your user object',
-      users: allUsers,
+      users: await allUsers,
     }
+  }
+
+  public async show(ctx: HttpContextContract) {
+    const { request, response } = ctx
+
+    const user = await User.query()
+      .select('id', 'email', 'created_at', 'updated_at')
+      .where('id', request.params().id)
+      .first()
+
+    if (!user) {
+      response.status(404)
+      response.send({
+        message: 'Cannot find user record.',
+      })
+      return
+    }
+
+    response.status(200)
+    response.send({
+      message: 'User object',
+      user: user,
+    })
+    return
   }
 
   public async me(ctx: HttpContextContract) {
@@ -19,10 +43,7 @@ export default class UserController {
 
     return {
       message: 'Your user object',
-      user: {
-        id: request.all().user.id,
-        email: request.all().user.email,
-      },
+      user: request.all().user,
     }
   }
 }
