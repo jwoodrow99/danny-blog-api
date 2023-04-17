@@ -77,6 +77,12 @@ export default class AuthController {
     return {
       message: 'Successful login',
       access_token: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+      },
     }
   }
 }
