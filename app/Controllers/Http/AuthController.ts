@@ -9,80 +9,96 @@ import jwt from 'jsonwebtoken'
 
 export default class AuthController {
   public async register(ctx: HttpContextContract) {
-    const { request } = ctx
+    const { request, response } = ctx
 
-    const duplicateUser = await User.query().where('email', request.body().email).first()
+    try {
+      const duplicateUser = await User.query().where('email', request.body().email).first()
 
-    // Check if duplicate user exists
-    if (duplicateUser) {
-      ctx.response.status(500)
-      return {
-        message: 'Duplicate user email.',
+      // Check if duplicate user exists
+      if (duplicateUser) {
+        ctx.response.status(500)
+        return {
+          message: 'Duplicate user email.',
+        }
       }
-    }
 
-    // Create new user
-    await User.create({
-      email: request.body().email,
-      password: await bcrypt.hash(request.body().password, 10),
-    })
+      // Create new user
+      await User.create({
+        email: request.body().email,
+        password: await bcrypt.hash(request.body().password, 10),
+      })
 
-    return {
-      message: 'New user created, you can lon login!',
+      return {
+        message: 'New user created, you can lon login!',
+      }
+    } catch (error) {
+      response.status(500)
+      response.send({
+        message: 'Server error.',
+      })
+      return
     }
   }
 
   public async login(ctx: HttpContextContract) {
-    const { request } = ctx
+    const { request, response } = ctx
 
-    // Find matching user email
-    const user = await User.query().where('email', request.body().email).first()
+    try {
+      // Find matching user email
+      const user = await User.query().where('email', request.body().email).first()
 
-    // Check if duplicate user exists
-    if (!user) {
-      ctx.response.status(404)
-      return {
-        message: 'No matching email found.',
+      // Check if duplicate user exists
+      if (!user) {
+        ctx.response.status(404)
+        return {
+          message: 'No matching email found.',
+        }
       }
-    }
 
-    // Check if authenticated
-    const authCheck = await bcrypt.compare(request.body().password, user.password)
-    if (!authCheck) {
-      ctx.response.status(401)
-      return {
-        message: 'Password is not valid.',
+      // Check if authenticated
+      const authCheck = await bcrypt.compare(request.body().password, user.password)
+      if (!authCheck) {
+        ctx.response.status(401)
+        return {
+          message: 'Password is not valid.',
+        }
       }
-    }
 
-    const exp = Number(Date.now()) + 1000 * 60 * 60 * 24 * 1 // milliseconds * seconds * minutes * hours * days
+      const exp = Number(Date.now()) + 1000 * 60 * 60 * 24 * 1 // milliseconds * seconds * minutes * hours * days
 
-    // Create JWT
-    const token = jwt.sign(
-      {
-        iss: 'danny-blog-api',
-        exp: exp,
-        sub: 'user_auth',
-        aud: user.id,
-        data: {
-          user: {
-            id: user.id,
-            email: user.email,
+      // Create JWT
+      const token = jwt.sign(
+        {
+          iss: 'danny-blog-api',
+          exp: exp,
+          sub: 'user_auth',
+          aud: user.id,
+          data: {
+            user: {
+              id: user.id,
+              email: user.email,
+            },
           },
         },
-      },
-      appKey
-    )
+        appKey
+      )
 
-    return {
-      message: 'Successful login',
-      access_token: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        created_at: user.createdAt,
-        updated_at: user.updatedAt,
-      },
+      return {
+        message: 'Successful login',
+        access_token: token,
+        user: {
+          id: user.id,
+          email: user.email,
+          created_at: user.createdAt,
+          updated_at: user.updatedAt,
+        },
+      }
+    } catch (error) {
+      response.status(500)
+      response.send({
+        message: 'Server error.',
+      })
+      return
     }
   }
 }

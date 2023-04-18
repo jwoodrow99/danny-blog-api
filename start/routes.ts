@@ -19,7 +19,6 @@
 */
 
 import Route from '@ioc:Adonis/Core/Route'
-import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 // Auth routes
 Route.group(() => {
@@ -36,7 +35,7 @@ Route.group(() => {
   .prefix('/user')
   .middleware('jwt')
 
-// User routes
+// Blog routes
 Route.group(() => {
   Route.get('/', 'BlogController.index')
   Route.get('/:id', 'BlogController.show')
@@ -46,23 +45,3 @@ Route.group(() => {
 })
   .prefix('/blog')
   .middleware('jwt')
-
-// Testing routes
-const test = async (ctx: HttpContextContract) => {
-  const { request, response } = ctx
-
-  response.status(200)
-  response.send({
-    message: 'Welcome to danny-blog-api!',
-    request: {
-      headers: request.headers(),
-      qs: request.qs(),
-      params: request.params(),
-      body: request.body(),
-    },
-  })
-  return
-}
-
-Route.get('/', test)
-Route.post('/test', test)
