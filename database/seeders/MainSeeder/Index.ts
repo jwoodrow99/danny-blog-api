@@ -8,5 +8,6 @@ export default class extends BaseSeeder {
   public async run() {
     await this.runSeeder(await import('../UserSeeder'))
     await this.runSeeder(await import('../BlogSeeder'))
+    await this.runSeeder(await import('../LikeSeeder'))
   }
 }
