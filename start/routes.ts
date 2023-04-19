@@ -30,6 +30,7 @@ Route.group(() => {
 Route.group(() => {
   Route.get('/', 'UserController.index')
   Route.get('/me', 'UserController.me')
+  Route.get('/feed', 'UserController.feed')
   Route.get('/:id', 'UserController.show')
 })
   .prefix('/user')
