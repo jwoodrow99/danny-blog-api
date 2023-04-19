@@ -29,6 +29,10 @@ export default class UserController {
       const user = await User.query()
         .select('id', 'email', 'created_at', 'updated_at')
         .where('id', request.params().id)
+        .withCount('followedBy')
+        .withAggregate('followedBy', (query) => {
+          query.where('user_id', request.all().user.id).count('*').as('followed_by_me')
+        })
         .first()
 
       if (!user) {
@@ -39,10 +43,19 @@ export default class UserController {
         return
       }
 
+      const formattedUser = {
+        id: user.id,
+        email: user.email,
+        created_at: user.createdAt,
+        updated_at: user.updatedAt,
+        followed_by_count: user.$extras.followedBy_count,
+        followed_by_me: user.$extras.followed_by_me,
+      }
+
       response.status(200)
       response.send({
         message: 'User object',
-        user: user,
+        user: formattedUser,
       })
       return
     } catch (error) {
@@ -86,6 +99,8 @@ export default class UserController {
       await User.query().preload('following').where('id', request.all().user.id).first()
     )?.following
 
+    let feed: any = []
+
     const feedQuery = Blog.query()
       .withAggregate('likes', (query) => {
         query.where('user_id', request.all().user.id).count('*').as('liked_by_me')
@@ -98,7 +113,9 @@ export default class UserController {
       feedQuery.orWhere('user_id', user.id)
     }
 
-    const feed = await feedQuery
+    if (usersFollowing.length > 0) {
+      feed = await feedQuery
+    }
 
     const formattedFeed: any = feed.map((blog) => {
       return {
@@ -119,6 +136,82 @@ export default class UserController {
       response.send({
         message: 'Blogs of users you are following.',
         blogs: formattedFeed,
+      })
+      return
+    } catch (error) {
+      response.status(500)
+      response.send({
+        message: 'Server error.',
+      })
+      return
+    }
+  }
+
+  public async follow(ctx: HttpContextContract) {
+    const { request, response } = ctx
+
+    try {
+      const userToFollow = await User.query()
+        .select('id', 'email', 'created_at', 'updated_at')
+        .where('id', request.params().id)
+        .withCount('followedBy')
+        .withAggregate('followedBy', (query) => {
+          query.where('user_id', request.all().user.id).count('*').as('followed_by_me')
+        })
+        .first()
+
+      if (userToFollow?.$extras.followed_by_me) {
+        response.status(400)
+        response.send({
+          message: 'You are already following this user.',
+        })
+        return
+      }
+
+      const requestingUser = await User.findOrFail(request.all().user.id)
+      requestingUser.related('following').attach([request.params().id])
+
+      response.status(200)
+      response.send({
+        message: 'Follow',
+      })
+      return
+    } catch (error) {
+      response.status(500)
+      response.send({
+        message: 'Server error.',
+      })
+      return
+    }
+  }
+
+  public async unfollow(ctx: HttpContextContract) {
+    const { request, response } = ctx
+
+    try {
+      const userToUnfollow = await User.query()
+        .select('id', 'email', 'created_at', 'updated_at')
+        .where('id', request.params().id)
+        .withCount('followedBy')
+        .withAggregate('followedBy', (query) => {
+          query.where('user_id', request.all().user.id).count('*').as('followed_by_me')
+        })
+        .first()
+
+      if (!userToUnfollow?.$extras.followed_by_me) {
+        response.status(400)
+        response.send({
+          message: 'You are not following this user.',
+        })
+        return
+      }
+
+      const requestingUser = await User.findOrFail(request.all().user.id)
+      requestingUser.related('following').detach([request.params().id])
+
+      response.status(200)
+      response.send({
+        message: 'Unfollow',
       })
       return
     } catch (error) {

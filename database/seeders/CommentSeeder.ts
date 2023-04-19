@@ -13,7 +13,7 @@ export default class extends BaseSeeder {
     for (const user of allUsers) {
       const blogs = await Blog.query().where('user_id', '!=', user.id)
 
-      const numberOfLoops = [...Array(10)]
+      const numberOfLoops = [...Array(50)]
 
       for (const index of numberOfLoops) {
         const randomBlog = blogs[Math.floor(Math.random() * blogs.length)]

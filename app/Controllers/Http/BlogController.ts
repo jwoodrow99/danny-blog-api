@@ -68,7 +68,16 @@ export default class BlogController {
 
     try {
       const blog: any = await Blog.query()
-        .preload('user')
+        .preload('comments', (userQuery) => {
+          userQuery.preload('user', (userQuery) => {
+            userQuery.select('id', 'email', 'created_at', 'updated_at')
+          })
+        })
+        .preload('user', (userQuery) => {
+          userQuery.withCount('followedBy').withAggregate('followedBy', (query) => {
+            query.where('user_id', request.all().user.id).count('*').as('followed_by_me')
+          })
+        })
         .withCount('likes')
         .withAggregate('likes', (query) => {
           query.where('user_id', request.all().user.id).count('*').as('liked_by_me')
@@ -83,9 +92,17 @@ export default class BlogController {
         article: blog.article,
         created_at: blog.createdAt,
         updated_at: blog.updatedAt,
-        user: blog.user,
+        user: {
+          id: blog.user.id,
+          email: blog.user.email,
+          created_at: blog.user.createdAt,
+          updated_at: blog.user.updatedAt,
+          followed_by_count: blog.user.$extras.followedBy_count,
+          followed_by_me: blog.user.$extras.followed_by_me,
+        },
         likes_count: blog.$extras.likes_count,
         liked_by_me: blog.$extras.liked_by_me,
+        comments: blog.comments,
       }
 
       response.status(200)

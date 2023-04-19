@@ -32,6 +32,8 @@ Route.group(() => {
   Route.get('/me', 'UserController.me')
   Route.get('/feed', 'UserController.feed')
   Route.get('/:id', 'UserController.show')
+  Route.post('/:id/follow', 'UserController.follow')
+  Route.delete('/:id/follow', 'UserController.unfollow')
 })
   .prefix('/user')
   .middleware('jwt')
