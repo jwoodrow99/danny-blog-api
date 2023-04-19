@@ -5,6 +5,8 @@ import User from 'App/Models/User'
 import Blog from 'App/Models/Blog'
 
 export default class Like extends BaseModel {
+  public static table = 'likes'
+
   @column({ isPrimary: true })
   public id: number
 
