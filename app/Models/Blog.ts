@@ -3,6 +3,7 @@ import { BaseModel, column, belongsTo, BelongsTo, hasMany, HasMany } from '@ioc:
 
 import User from 'App/Models/User'
 import Like from 'App/Models/Like'
+import Comment from 'App/Models/Comment'
 
 export default class Blog extends BaseModel {
   public static table = 'blogs'
@@ -30,4 +31,7 @@ export default class Blog extends BaseModel {
 
   @hasMany(() => Like)
   public likes: HasMany<typeof Like>
+
+  @hasMany(() => Comment)
+  public comments: HasMany<typeof Comment>
 }

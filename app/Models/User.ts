@@ -3,6 +3,7 @@ import { BaseModel, column, hasMany, HasMany } from '@ioc:Adonis/Lucid/Orm'
 
 import Blog from 'App/Models/Blog'
 import Like from 'App/Models/Like'
+import Comment from 'App/Models/Comment'
 
 export default class User extends BaseModel {
   public static table = 'users'
@@ -27,4 +28,7 @@ export default class User extends BaseModel {
 
   @hasMany(() => Like)
   public likes: HasMany<typeof Like>
+
+  @hasMany(() => Comment)
+  public comments: HasMany<typeof Comment>
 }

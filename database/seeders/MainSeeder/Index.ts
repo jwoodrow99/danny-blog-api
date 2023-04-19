@@ -9,5 +9,6 @@ export default class extends BaseSeeder {
     await this.runSeeder(await import('../UserSeeder'))
     await this.runSeeder(await import('../BlogSeeder'))
     await this.runSeeder(await import('../LikeSeeder'))
+    await this.runSeeder(await import('../CommentSeeder'))
   }
 }
