@@ -67,12 +67,31 @@ export default class BlogController {
     const { request, response } = ctx
 
     try {
-      const blog = Blog.query().preload('user').where('id', request.params().id).first()
+      const blog: any = await Blog.query()
+        .preload('user')
+        .withCount('likes')
+        .withAggregate('likes', (query) => {
+          query.where('user_id', request.all().user.id).count('*').as('liked_by_me')
+        })
+        .where('id', request.params().id)
+        .first()
+
+      const formattedBlog = {
+        id: blog.id,
+        user_id: blog.userId,
+        title: blog.title,
+        article: blog.article,
+        created_at: blog.createdAt,
+        updated_at: blog.updatedAt,
+        user: blog.user,
+        likes_count: blog.$extras.likes_count,
+        liked_by_me: blog.$extras.liked_by_me,
+      }
 
       response.status(200)
       response.send({
         message: 'Blog',
-        blog: await blog,
+        blog: formattedBlog,
       })
       return
     } catch (error) {
