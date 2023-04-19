@@ -45,6 +45,7 @@ Route.group(() => {
   Route.post('/', 'BlogController.store')
   Route.patch('/:id', 'BlogController.update')
   Route.post('/:id/like', 'BlogController.createLike')
+  Route.post('/:id/comment', 'BlogController.comment')
   Route.delete('/:id/like', 'BlogController.destroyLike')
   Route.delete('/:id', 'BlogController.destroy')
 })

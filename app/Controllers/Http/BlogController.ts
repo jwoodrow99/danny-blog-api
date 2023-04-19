@@ -2,6 +2,7 @@ import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import Blog from 'App/Models/Blog'
 import Like from 'App/Models/Like'
+import Comment from 'App/Models/Comment'
 
 export default class BlogController {
   public async index(ctx: HttpContextContract) {
@@ -69,7 +70,7 @@ export default class BlogController {
     try {
       const blog: any = await Blog.query()
         .preload('comments', (userQuery) => {
-          userQuery.preload('user', (userQuery) => {
+          userQuery.orderBy('createdAt', 'desc').preload('user', (userQuery) => {
             userQuery.select('id', 'email', 'created_at', 'updated_at')
           })
         })
@@ -288,6 +289,47 @@ export default class BlogController {
       response.status(200)
       response.send({
         message: 'Blog has been removed.',
+      })
+      return
+    } catch (error) {
+      response.status(500)
+      response.send({
+        message: 'Server error.',
+      })
+      return
+    }
+  }
+
+  public async comment(ctx: HttpContextContract) {
+    const { request, response } = ctx
+
+    try {
+      if (!request.body().text) {
+        response.status(500)
+        response.send({
+          message: 'Missing required form data.',
+        })
+        return
+      }
+
+      const newComment = await Comment.create({
+        userId: request.all().user.id,
+        blogId: request.params().id,
+        text: request.body().text,
+      })
+
+      const formattedComment = {
+        id: newComment.id,
+        user_id: newComment.userId,
+        blog_id: newComment.blogId,
+        text: newComment.text,
+        user: request.all().user,
+      }
+
+      response.status(200)
+      response.send({
+        message: 'New comment entry created.',
+        comment: formattedComment,
       })
       return
     } catch (error) {
