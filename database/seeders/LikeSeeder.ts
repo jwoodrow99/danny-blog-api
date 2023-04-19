@@ -14,7 +14,9 @@ export default class extends BaseSeeder {
       const numberOfLoops = [...Array(10)]
 
       for (const index of numberOfLoops) {
-        const randomBlog = blogs[Math.floor(Math.random() * blogs.length)]
+        const randomIndex = Math.floor(Math.random() * blogs.length)
+        const randomBlog = blogs[randomIndex]
+        blogs.splice(randomIndex, 1)
         await Like.create({
           userId: user.id,
           blogId: randomBlog.id,

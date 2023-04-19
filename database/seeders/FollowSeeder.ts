@@ -13,7 +13,6 @@ export default class extends BaseSeeder {
         const randomIndex = Math.floor(Math.random() * otherUsers.length)
         const randomOtherUser = otherUsers[randomIndex]
         otherUsers.splice(randomIndex, 1)
-        console.log(`${user.id}:${randomOtherUser.id}`)
         await user.related('following').attach([randomOtherUser.id])
       }
     }

@@ -1,13 +1,19 @@
 import type { HttpContextContract } from '@ioc:Adonis/Core/HttpContext'
 
 import Blog from 'App/Models/Blog'
+import Like from 'App/Models/Like'
 
 export default class BlogController {
   public async index(ctx: HttpContextContract) {
     const { request, response } = ctx
 
     try {
-      const blogs = Blog.query().preload('user')
+      const blogs = Blog.query()
+        .preload('user')
+        .withCount('likes')
+        .withAggregate('likes', (query) => {
+          query.where('user_id', request.all().user.id).count('*').as('liked_by_me')
+        })
 
       // Search
       if (request.qs().search) {
@@ -26,10 +32,26 @@ export default class BlogController {
         blogs.paginate(request.qs().page, request.qs().limit)
       }
 
+      const matchingBlogs = await blogs
+
+      const formattedBlogs: any = matchingBlogs.map((blog) => {
+        return {
+          id: blog.id,
+          user_id: blog.userId,
+          title: blog.title,
+          article: blog.article,
+          created_at: blog.createdAt,
+          updated_at: blog.updatedAt,
+          user: blog.user,
+          likes_count: blog.$extras.likes_count,
+          liked_by_me: blog.$extras.liked_by_me,
+        }
+      })
+
       response.status(200)
       response.send({
         message: 'Blogs',
-        blogs: await blogs,
+        blogs: formattedBlogs,
       })
       return
     } catch (error) {
@@ -125,6 +147,82 @@ export default class BlogController {
       response.send({
         message: 'Blog has been updated.',
         blog: blog,
+      })
+      return
+    } catch (error) {
+      response.status(500)
+      response.send({
+        message: 'Server error.',
+      })
+      return
+    }
+  }
+
+  public async createLike(ctx: HttpContextContract) {
+    const { request, response } = ctx
+
+    try {
+      const blog: any = await Blog.query()
+        .withAggregate('likes', (query) => {
+          query.where('user_id', request.all().user.id).count('*').as('liked_by_me')
+        })
+        .where('id', request.params().id)
+        .first()
+
+      if (!blog.$extras.liked_by_me) {
+        await Like.create({
+          userId: request.all().user.id,
+          blogId: blog.id,
+        })
+      } else {
+        response.status(400)
+        response.send({
+          message: 'Blog is already liked.',
+        })
+        return
+      }
+
+      response.status(200)
+      response.send({
+        message: 'Blog has updated like.',
+      })
+      return
+    } catch (error) {
+      response.status(500)
+      response.send({
+        message: 'Server error.',
+      })
+      return
+    }
+  }
+
+  public async destroyLike(ctx: HttpContextContract) {
+    const { request, response } = ctx
+
+    try {
+      const blog: any = await Blog.query()
+        .withAggregate('likes', (query) => {
+          query.where('user_id', request.all().user.id).count('*').as('liked_by_me')
+        })
+        .where('id', request.params().id)
+        .first()
+
+      if (blog.$extras.liked_by_me) {
+        await Like.query()
+          .where('user_id', request.all().user.id)
+          .where('blog_id', blog.id)
+          .delete()
+      } else {
+        response.status(400)
+        response.send({
+          message: 'Blog is already liked.',
+        })
+        return
+      }
+
+      response.status(200)
+      response.send({
+        message: 'Blog has updated like.',
       })
       return
     } catch (error) {

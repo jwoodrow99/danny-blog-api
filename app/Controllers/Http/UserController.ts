@@ -86,7 +86,13 @@ export default class UserController {
       await User.query().preload('following').where('id', request.all().user.id).first()
     )?.following
 
-    const feedQuery = Blog.query().preload('user').orderBy('created_at', 'desc')
+    const feedQuery = Blog.query()
+      .withAggregate('likes', (query) => {
+        query.where('user_id', request.all().user.id).count('*').as('liked_by_me')
+      })
+      .preload('user')
+      .orderBy('created_at', 'desc')
+      .withCount('likes')
 
     for (const user of usersFollowing) {
       feedQuery.orWhere('user_id', user.id)
@@ -94,11 +100,25 @@ export default class UserController {
 
     const feed = await feedQuery
 
+    const formattedFeed: any = feed.map((blog) => {
+      return {
+        id: blog.id,
+        user_id: blog.userId,
+        title: blog.title,
+        article: blog.article,
+        created_at: blog.createdAt,
+        updated_at: blog.updatedAt,
+        user: blog.user,
+        likes_count: blog.$extras.likes_count,
+        liked_by_me: blog.$extras.liked_by_me,
+      }
+    })
+
     try {
       response.status(200)
       response.send({
         message: 'Blogs of users you are following.',
-        blogs: feed,
+        blogs: formattedFeed,
       })
       return
     } catch (error) {
