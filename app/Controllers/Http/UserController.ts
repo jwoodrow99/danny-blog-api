@@ -9,7 +9,7 @@ export default class UserController {
     try {
       const allUsers = await User.query().select('id', 'email', 'created_at', 'updated_at')
       return {
-        message: 'Your user object',
+        message: 'All users',
         users: allUsers,
       }
     } catch (error) {
@@ -55,11 +55,18 @@ export default class UserController {
 
   public async me(ctx: HttpContextContract) {
     const { request, response } = ctx
+
+    const userAndFollows = await User.query()
+      .preload('following')
+      .preload('followedBy')
+      .where('id', request.all().user.id)
+      .first()
+
     try {
       response.status(200)
       response.send({
         message: 'Your user object',
-        user: request.all().user,
+        user: userAndFollows,
       })
       return
     } catch (error) {
